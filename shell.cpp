@@ -25,6 +25,7 @@ int main()
             {
                 std::vector<microshellxx::token> toks = microshellxx::lex(str);
                 uy::shared_ptr<microshellxx::command> cmd = microshellxx::parser(toks).do_parse();
+                std::cout << "Result: " << cmd->to_string() << std::endl;
             }
             catch (const std::exception& ex)
             {
@@ -34,7 +35,7 @@ int main()
         }
         else
         {
-            std::cout << "!! Input is NULL !!" << std::endl;
+            std::cout << "exit" << std::endl;
             break;
         }
     }

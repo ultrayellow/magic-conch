@@ -47,13 +47,13 @@ namespace microshellxx
         return REDIR_NONE;
     }
 
-    const token& parser::next()
+    void parser::next()
     {
         if (this->it == this->end)
         {
             throw end_of_token();
         }
-        return *++this->it;
+        ++this->it;
     }
 
     bool parser::next_if(const std::string& meta)
@@ -76,9 +76,8 @@ namespace microshellxx
 
     uy::shared_ptr<command> parser::next_list()
     {
-        uy::shared_ptr<command> tree;
+        uy::shared_ptr<command> tree = next_pipeline();
 
-        tree = next_pipeline();
         while (this->it != this->end && (this->it->is_meta("&&") || this->it->is_meta("||")))
         {
             const token& tok = *it;
@@ -95,9 +94,8 @@ namespace microshellxx
 
     uy::shared_ptr<command> parser::next_pipeline()
     {
-        uy::shared_ptr<command> tree;
+        uy::shared_ptr<command> tree = next_command();
 
-        tree = next_command();
         while (this->next_if("|"))
         {
             uy::shared_ptr<command> first = tree;
@@ -122,10 +120,14 @@ namespace microshellxx
                 redir_type type = _get_redir_type(tok);
                 if (type != REDIR_NONE)
                 {
-                    const token& word = this->next();
-                    _assert_syntax(word.is_word());
-                    subshell->add_redir(redir(type, word.get()));
-                    continue;
+                    this->next();
+                    if (this->it != this->end)
+                    {
+                        const token& word = *this->it;
+                        _assert_syntax(this->next_if(""));
+                        subshell->add_redir(redir(type, word.get()));
+                        continue;
+                    }
                 }
                 else
                 {
@@ -143,6 +145,7 @@ namespace microshellxx
     uy::shared_ptr<simple_command> parser::next_simple_command()
     {
         uy::shared_ptr<simple_command> cmd = uy::make_shared<simple_command>();
+
         while (this->it != this->end)
         {
             const token& tok = *this->it;
@@ -155,10 +158,14 @@ namespace microshellxx
                 redir_type type = _get_redir_type(tok);
                 if (type != REDIR_NONE)
                 {
-                    const token& word = this->next();
-                    _assert_syntax(word.is_word());
-                    cmd->add_redir(redir(type, word.get()));
-                    continue;
+                    this->next();
+                    if (this->it != this->end)
+                    {
+                        const token& word = *this->it;
+                        _assert_syntax(this->next_if(""));
+                        cmd->add_redir(redir(type, word.get()));
+                        continue;
+                    }
                 }
                 else
                 {
@@ -166,7 +173,9 @@ namespace microshellxx
                 }
             }
         }
+
         _assert_syntax(!cmd->is_empty());
+
         return cmd;
     }
 

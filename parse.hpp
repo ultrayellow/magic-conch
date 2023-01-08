@@ -28,7 +28,7 @@ namespace microshellxx
         parser(const std::vector<token>& toks);
 
     private:
-        const token& next();
+        void next();
         bool next_if(const std::string& meta);
 
         uy::shared_ptr<command> next_list();

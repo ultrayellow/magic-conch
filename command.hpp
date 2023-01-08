@@ -33,6 +33,8 @@ namespace microshellxx
     {
     public:
         virtual ~command() {}
+
+        virtual std::string to_string() const = 0;
     };
 
     class simple_command : public command
@@ -44,9 +46,14 @@ namespace microshellxx
     public:
         simple_command() : words(), redirs() {}
 
-        bool is_empty() const { return this->words.empty() && this->redirs.empty(); }
-        void add_word(const std::string& word) { this->words.push_back(word); }
-        void add_redir(const redir& r) { this->redirs.push_back(r); }
+        bool is_empty() const;
+        const std::vector<std::string>& get_words() const;
+        const std::vector<redir>& get_redirs() const;
+
+        void add_word(const std::string& word);
+        void add_redir(const redir& r);
+
+        std::string to_string() const;
     };
 
     class subshell_command : public command
@@ -58,7 +65,10 @@ namespace microshellxx
     public:
         subshell_command(const uy::shared_ptr<command>& container) : container(container) {}
 
-        void add_redir(const redir& r) { this->redirs.push_back(r); }
+        void add_redir(const redir& r);
+        const uy::shared_ptr<command>& get_container() const;
+
+        std::string to_string() const;
     };
 
     class command_connection : public command
@@ -71,6 +81,10 @@ namespace microshellxx
     public:
         command_connection(const std::string& connector, uy::shared_ptr<command> first, uy::shared_ptr<command> second) : connector(connector), first(first), second(second) {}
 
-        const std::string& get_connector() const { return this->connector; }
+        const std::string& get_connector() const;
+        const uy::shared_ptr<command>& get_first() const;
+        const uy::shared_ptr<command>& get_second() const;
+
+        std::string to_string() const;
     };
 }

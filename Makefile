@@ -7,7 +7,7 @@ TARGET = microshellxx.out
 OBJECTS_DIR = objs/
 CXXFLAGS = -lreadline
 
-SOURCES = shell.cpp token.cpp
+SOURCES = shell.cpp command.cpp token.cpp parse.cpp
 OBJECTS = $(addprefix $(OBJECTS_DIR), $(SOURCES:.cpp=.o))
 
 CXXFLAGS += -fsanitize=address -g3

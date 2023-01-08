@@ -3,14 +3,16 @@
 //       ALL WRONGS RESERVED       //
 // ******************************* //
 
+#include "command.hpp"
+#include "parse.hpp"
+#include "simple_shared_ptr.hpp"
 #include "token.hpp"
 
 #include <readline/readline.h>
 
+#include <iostream>
 #include <string>
 #include <vector>
-
-#include <iostream>
 
 int main()
 {
@@ -21,11 +23,8 @@ int main()
         {
             try
             {
-                std::vector<token> tokens = lex(str);
-                for (const token& t : tokens)
-                {
-                    std::cout << (t.meta ? "META: " : "word: ") << t.str << std::endl;
-                }
+                std::vector<microshellxx::token> toks = microshellxx::lex(str);
+                uy::shared_ptr<microshellxx::command> cmd = microshellxx::parser(toks).do_parse();
             }
             catch (const std::exception& ex)
             {

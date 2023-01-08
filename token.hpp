@@ -9,28 +9,38 @@
 #include <string>
 #include <vector>
 
-struct token
+namespace microshellxx
 {
-    bool meta;
-    std::string str;
+    class token
+    {
+    private:
+        bool meta;
+        std::string str;
 
-    token(bool meta, const std::string& str) : meta(meta), str(str) {}
-};
+    public:
+        token(bool meta, const std::string& str) : meta(meta), str(str) {}
 
-std::vector<token> lex(const std::string& str);
+        bool is_word() const { return !this->meta; }
+        bool is_meta(const std::string& str) const { return this->meta && this->str == str; }
 
-class bad_quote_pair : public std::exception
-{
-public:
-    bad_quote_pair() throw() {}
-    virtual ~bad_quote_pair() throw() {}
-    virtual const char* what() const throw() { return "bad quote pair"; }
-};
+        const std::string& get() const { return this->str; }
+    };
 
-class invalid_token : public std::exception
-{
-public:
-    invalid_token() throw() {}
-    virtual ~invalid_token() throw() {}
-    virtual const char* what() const throw() { return "invalid token"; }
-};
+    std::vector<token> lex(const std::string& str);
+
+    class bad_quote_pair : public std::exception
+    {
+    public:
+        bad_quote_pair() throw() {}
+        virtual ~bad_quote_pair() throw() {}
+        virtual const char* what() const throw() { return "bad quote pair"; }
+    };
+
+    class invalid_token : public std::exception
+    {
+    public:
+        invalid_token() throw() {}
+        virtual ~invalid_token() throw() {}
+        virtual const char* what() const throw() { return "invalid token"; }
+    };
+}

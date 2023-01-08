@@ -8,90 +8,104 @@
 #include <string>
 #include <vector>
 
-std::vector<token> lex(const std::string& str)
+namespace microshellxx
 {
-    std::vector<token> ret_val;
-
-    std::string::const_iterator it = str.begin(), beg = str.end();
-    do
+    static bool _string_contains(const std::string& str, std::string::value_type val)
     {
-        bool split = true;
-        std::string::size_type n = 1;
-        if (it == str.end())
+        return str.find(val) != std::string::npos;
+    }
+
+    static bool _accept_meta(std::string::const_iterator it, std::string::const_iterator end, std::string::size_type& out_len)
+    {
+        if (_string_contains(" \f\n\r\t\v", *it))
         {
-            n = 0;
+            out_len = 0;
         }
-        else
+        else if (_string_contains("()", *it))
         {
-            switch (*it)
-            {
-            case ' ':
-            case '\f':
-            case '\n':
-            case '\r':
-            case '\t':
-            case '\v':
-                n = 0;
-                break;
-
-            case '&':
-            case '|':
-            case '<':
-            case '>':
-                if (it + 1 != str.end() && *(it + 1) == *it)
-                {
-                    n = 2;
-                }
-                break;
-
-            case '(':
-            case ')':
-                break;
-
-            default:
-                split = false;
-                break;
-            }
+            out_len = 1;
         }
-
-        if (split)
+        else if (_string_contains("&|<>", *it))
         {
-            if (beg != str.end())
+            if (it + 1 != end && *(it + 1) == *it)
             {
-                ret_val.push_back(token(false, std::string(beg, it)));
-                beg = str.end();
+                out_len = 2;
             }
-            if (n != 0)
+            else
             {
-                std::string meta(it, it + n);
-                ret_val.push_back(token(true, meta));
-                if (meta == "&")
-                {
-                    throw invalid_token();
-                }
-                it += n - 1;
+                out_len = 1;
             }
         }
         else
         {
-            if (beg == str.end())
+            return false;
+        }
+        return true;
+    }
+
+    static std::string _make_meta_string(std::string::const_iterator it, std::string::size_type len)
+    {
+        std::string ret_val(it, it + len);
+
+        if (ret_val == "&")
+        {
+            throw invalid_token();
+        }
+
+        return ret_val;
+    }
+
+    static std::string::const_iterator _skip_quote(std::string::const_iterator it, std::string::const_iterator end)
+    {
+        if (*it == '\'' || *it == '\"')
+        {
+            char c = *it++;
+
+            while (it != end && *it != c)
             {
-                beg = it;
+                ++it;
             }
-            if (*it == '\'' || *it == '\"')
+
+            if (it == end)
             {
-                char c = *it++;
-                while (it != str.end() && *it != c)
-                {
-                    ++it;
-                }
-                if (it == str.end())
-                {
-                    throw bad_quote_pair();
-                }
+                throw bad_quote_pair();
             }
         }
-    } while (it++ != str.end());
 
-    return ret_val;
+        return it;
+    }
+
+    std::vector<token> lex(const std::string& str)
+    {
+        std::vector<token> ret_val;
+
+        std::string::const_iterator it = str.begin(), beg = str.end();
+        do
+        {
+            std::string::size_type n = 0;
+            if (it == str.end() || _accept_meta(it, str.end(), n))
+            {
+                if (beg != str.end())
+                {
+                    ret_val.push_back(token(false, std::string(beg, it)));
+                    beg = str.end();
+                }
+                if (n != 0)
+                {
+                    ret_val.push_back(token(true, _make_meta_string(it, n)));
+                    it += n - 1;
+                }
+            }
+            else
+            {
+                if (beg == str.end())
+                {
+                    beg = it;
+                }
+                it = _skip_quote(it, str.end());
+            }
+        } while (it++ != str.end());
+
+        return ret_val;
+    }
 }

@@ -28,7 +28,7 @@ int main()
                 std::vector<microshellxx::token> toks = microshellxx::lex(str);
                 uy::shared_ptr<microshellxx::command> cmd = microshellxx::parser(toks).do_parse();
                 std::cout << "Result: " << cmd->to_string() << std::endl;
-                status = cmd->execute();
+                status = cmd->execute(NO_PIPE, NO_PIPE);
             }
             catch (const std::exception& ex)
             {

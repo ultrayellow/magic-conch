@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 
+#define NO_PIPE (-1)
+
 namespace microshellxx
 {
     enum redir_type
@@ -31,10 +33,18 @@ namespace microshellxx
 
     class command
     {
+    protected:
+        pid_t pid;
+        int next_pipe;
+
     public:
+        command() : pid(0), next_pipe(NO_PIPE) {}
         virtual ~command() {}
 
-        virtual int execute() const = 0;
+        pid_t get_pid() const { return this->pid; }
+        void set_next_pipe(int next_pipe) { this->next_pipe = next_pipe; }
+
+        virtual int execute(int pipe_in, int pipe_out) = 0;
         virtual std::string to_string() const = 0;
     };
 
@@ -54,7 +64,7 @@ namespace microshellxx
         void add_word(const std::string& word);
         void add_redir(const redir& r);
 
-        int execute() const;
+        int execute(int pipe_in, int pipe_out);
         std::string to_string() const;
     };
 
@@ -70,7 +80,7 @@ namespace microshellxx
         void add_redir(const redir& r);
         const uy::shared_ptr<command>& get_container() const;
 
-        int execute() const;
+        int execute(int pipe_in, int pipe_out);
         std::string to_string() const;
     };
 
@@ -88,7 +98,7 @@ namespace microshellxx
         const uy::shared_ptr<command>& get_first() const;
         const uy::shared_ptr<command>& get_second() const;
 
-        int execute() const;
+        int execute(int pipe_in, int pipe_out);
         std::string to_string() const;
     };
 }

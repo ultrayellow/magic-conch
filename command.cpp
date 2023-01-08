@@ -66,7 +66,7 @@ namespace microshellxx
         }
     }
 
-    int simple_command::execute() const
+    int simple_command::execute(int pipe_in, int pipe_out)
     {
         std::vector<std::string> argv;
         for (std::vector<std::string>::const_iterator it = this->words.begin(); it != this->words.end(); ++it)
@@ -88,6 +88,29 @@ namespace microshellxx
         pid_t child = ::fork();
         if (child == 0)
         {
+            if (pipe_in != NO_PIPE)
+            {
+                if (::dup2(pipe_in, STDIN_FILENO) < 0)
+                {
+                    // TODO: safe dup2?
+                    ::exit(EXIT_FAILURE);
+                }
+                ::close(pipe_in);
+            }
+            if (pipe_out != NO_PIPE)
+            {
+                if (::dup2(pipe_out, STDOUT_FILENO) < 0)
+                {
+                    // TODO: safe dup2?
+                    exit(EXIT_FAILURE);
+                }
+                ::close(pipe_out);
+            }
+            if (this->next_pipe != NO_PIPE)
+            {
+                ::close(this->next_pipe);
+            }
+
             std::vector<const char*> argv_c_str;
             argv_c_str.reserve(argv.size() + 1);
             for (std::vector<std::string>::const_iterator it = argv.begin(); it != argv.end(); ++it)
@@ -102,8 +125,12 @@ namespace microshellxx
         else
         {
             // TODO: ...
-            int status;
-            ::waitpid(child, &status, 0);
+            this->pid = child;
+            int status = EXIT_SUCCESS;
+            if (pipe_out == NO_PIPE)
+            {
+                ::waitpid(child, &status, 0);
+            }
             return status;
         }
     }
@@ -130,7 +157,7 @@ namespace microshellxx
             {
                 oss << " ";
             }
-            std::string redir_text = "[NONE]";
+            std::string redir_text;
             switch (it->type)
             {
             case REDIR_WRITE:
@@ -144,6 +171,9 @@ namespace microshellxx
                 break;
             case REDIR_HEREDOC:
                 redir_text = "<<";
+                break;
+            default:
+                redir_text = "(none)";
                 break;
             }
             oss << redir_text << " `" << it->word << "`";
@@ -163,8 +193,10 @@ namespace microshellxx
         return this->container;
     }
 
-    int subshell_command::execute() const
+    int subshell_command::execute(int pipe_in, int pipe_out)
     {
+        static_cast<void>(pipe_in);
+        static_cast<void>(pipe_out);
         std::cout << "Not implemented yet." << std::endl;
         return 0;
     }
@@ -177,7 +209,7 @@ namespace microshellxx
 
         for (std::vector<redir>::const_iterator it = this->redirs.begin(); it != this->redirs.end(); ++it)
         {
-            std::string redir_text = "[NONE]";
+            std::string redir_text;
             switch (it->type)
             {
             case REDIR_WRITE:
@@ -191,6 +223,9 @@ namespace microshellxx
                 break;
             case REDIR_HEREDOC:
                 redir_text = "<<";
+                break;
+            default:
+                redir_text = "(none)";
                 break;
             }
             oss << " " << redir_text << " `" << it->word << "`";
@@ -214,7 +249,7 @@ namespace microshellxx
         return this->second;
     }
 
-    static int _execute_pipeline(const command_connection& pipeline)
+    static int _execute_pipeline(const command_connection& pipeline, int pipe_in, int pipe_out)
     {
         std::vector<uy::shared_ptr<command> > cmdv;
         cmdv.push_back(pipeline.get_second());
@@ -235,19 +270,52 @@ namespace microshellxx
         }
         std::reverse(cmdv.begin(), cmdv.end());
 
-        for (const uy::shared_ptr<command>& cmd : cmdv)
+        int prev = pipe_in;
+        int fildes[2];
+        int status = EXIT_SUCCESS;
+        for (std::vector<uy::shared_ptr<command> >::iterator it = cmdv.begin(); it != cmdv.end(); ++it)
         {
-            // TODO: exec
-            std::cout << "PIPE: " << cmd->to_string() << std::endl;
+            const uy::shared_ptr<command>& cmd = *it;
+            bool last = it + 1 == cmdv.end();
+            if (last)
+            {
+                fildes[0] = NO_PIPE;
+                fildes[1] = pipe_out;
+            }
+            else
+            {
+                if (::pipe(fildes) < 0)
+                {
+                    // TODO: safe_pipe?
+                    ::exit(EXIT_FAILURE);
+                }
+            }
+            cmd->set_next_pipe(fildes[0]);
+            status = cmd->execute(prev, fildes[1]);
+            if (prev != NO_PIPE)
+            {
+                ::close(prev);
+            }
+            prev = fildes[0];
+            ::close(fildes[1]);
         }
-        return 0;
+        if (pipe_out == NO_PIPE)
+        {
+            for (std::vector<uy::shared_ptr<command> >::iterator it = cmdv.begin(); it != cmdv.end(); ++it)
+            {
+                const uy::shared_ptr<command>& cmd = *it;
+                int status_internal;
+                ::waitpid(cmd->get_pid(), &status_internal, 0);
+            }
+        }
+        return status;
     }
 
-    int command_connection::execute() const
+    int command_connection::execute(int pipe_in, int pipe_out)
     {
         if (this->connector == "|")
         {
-            return _execute_pipeline(*this);
+            return _execute_pipeline(*this, pipe_in, pipe_out);
         }
         else
         {

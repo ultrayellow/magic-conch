@@ -7,6 +7,8 @@ TARGET = microshellxx.out
 OBJECTS_DIR = objs/
 CXXFLAGS = -lreadline
 
+CXXFLAGS += -Wall -Wextra -Werror -std=c++98 -pedantic
+
 SOURCES = shell.cpp command.cpp token.cpp parse.cpp
 OBJECTS = $(addprefix $(OBJECTS_DIR), $(SOURCES:.cpp=.o))
 

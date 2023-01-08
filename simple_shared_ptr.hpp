@@ -115,26 +115,26 @@ namespace uy
     template <typename T, typename TSource>
     shared_ptr<T> static_pointer_cast(const shared_ptr<TSource>& that) throw()
     {
-        return shared_ptr<T>(that, static_cast<typename shared_ptr<T>::element_type*>(that.get()));
+        return shared_ptr<T>(that, static_cast<T*>(that.get()));
     }
 
     template <typename T, typename TSource>
     shared_ptr<T> const_pointer_cast(const shared_ptr<TSource>& that) throw()
     {
-        return shared_ptr<T>(that, const_cast<typename shared_ptr<T>::element_type*>(that.get()));
+        return shared_ptr<T>(that, const_cast<T*>(that.get()));
     }
 
     template <typename T, typename TSource>
     shared_ptr<T> dynamic_pointer_cast(const shared_ptr<TSource>& that) throw()
     {
-        typename shared_ptr<T>::element_type* p = dynamic_cast<typename shared_ptr<T>::element_type*>(that.get());
+        T* p = dynamic_cast<T*>(that.get());
         return p ? shared_ptr<T>(that, p) : shared_ptr<T>();
     }
 
     template <typename T, typename TSource>
     shared_ptr<T> reinterpret_pointer_cast(const shared_ptr<TSource>& that) throw()
     {
-        return shared_ptr<T>(that, reinterpret_cast<typename shared_ptr<T>::element_type*>(that.get()));
+        return shared_ptr<T>(that, reinterpret_cast<T*>(that.get()));
     }
 
     template <typename T>

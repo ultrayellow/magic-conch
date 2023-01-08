@@ -10,12 +10,14 @@
 
 #include <readline/readline.h>
 
+#include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
 
 int main()
 {
+    int status = EXIT_SUCCESS;
     for (;;)
     {
         char* str = readline("shell$ ");
@@ -26,6 +28,7 @@ int main()
                 std::vector<microshellxx::token> toks = microshellxx::lex(str);
                 uy::shared_ptr<microshellxx::command> cmd = microshellxx::parser(toks).do_parse();
                 std::cout << "Result: " << cmd->to_string() << std::endl;
+                status = cmd->execute();
             }
             catch (const std::exception& ex)
             {
@@ -39,5 +42,5 @@ int main()
             break;
         }
     }
-    return 0;
+    return status;
 }

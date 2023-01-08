@@ -56,22 +56,24 @@ namespace microshellxx
         ++this->it;
     }
 
-    bool parser::next_if(const std::string& meta)
+    bool parser::next_if_meta(const std::string& meta)
     {
-        if (this->it == this->end)
+        if (this->it != this->end && this->it->is_meta(meta))
         {
-            return false;
+            this->next();
+            return true;
         }
-        if (meta.empty() && !this->it->is_word())
+        return false;
+    }
+
+    bool parser::next_if_word()
+    {
+        if (this->it != this->end && this->it->is_word())
         {
-            return false;
+            this->next();
+            return true;
         }
-        if (!meta.empty() && !this->it->is_meta(meta))
-        {
-            return false;
-        }
-        this->next();
-        return true;
+        return false;
     }
 
     uy::shared_ptr<command> parser::next_list()
@@ -80,7 +82,7 @@ namespace microshellxx
 
         while (this->it != this->end && (this->it->is_meta("&&") || this->it->is_meta("||")))
         {
-            const token& tok = *it;
+            const token& tok = *this->it;
             this->next();
             uy::shared_ptr<command> first = tree;
             uy::shared_ptr<command> second = next_pipeline();
@@ -96,7 +98,7 @@ namespace microshellxx
     {
         uy::shared_ptr<command> tree = next_command();
 
-        while (this->next_if("|"))
+        while (this->next_if_meta("|"))
         {
             uy::shared_ptr<command> first = tree;
             uy::shared_ptr<command> second = next_command();
@@ -108,10 +110,10 @@ namespace microshellxx
 
     uy::shared_ptr<command> parser::next_command()
     {
-        if (this->next_if("("))
+        if (this->next_if_meta("("))
         {
             uy::shared_ptr<subshell_command> subshell = uy::make_shared<subshell_command>(this->next_list());
-            _assert_syntax(this->next_if(")"));
+            _assert_syntax(this->next_if_meta(")"));
 
             // optional redirection list
             while (this->it != this->end)
@@ -124,7 +126,7 @@ namespace microshellxx
                     if (this->it != this->end)
                     {
                         const token& word = *this->it;
-                        _assert_syntax(this->next_if(""));
+                        _assert_syntax(this->next_if_word());
                         subshell->add_redir(redir(type, word.get()));
                         continue;
                     }
@@ -149,7 +151,7 @@ namespace microshellxx
         while (this->it != this->end)
         {
             const token& tok = *this->it;
-            if (this->next_if(""))
+            if (this->next_if_word())
             {
                 cmd->add_word(tok.get());
             }
@@ -162,7 +164,7 @@ namespace microshellxx
                     if (this->it != this->end)
                     {
                         const token& word = *this->it;
-                        _assert_syntax(this->next_if(""));
+                        _assert_syntax(this->next_if_word());
                         cmd->add_redir(redir(type, word.get()));
                         continue;
                     }

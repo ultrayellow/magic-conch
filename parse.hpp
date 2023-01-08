@@ -29,7 +29,8 @@ namespace microshellxx
 
     private:
         void next();
-        bool next_if(const std::string& meta);
+        bool next_if_meta(const std::string& meta);
+        bool next_if_word();
 
         uy::shared_ptr<command> next_list();
         uy::shared_ptr<command> next_pipeline();

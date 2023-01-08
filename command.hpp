@@ -34,6 +34,7 @@ namespace microshellxx
     public:
         virtual ~command() {}
 
+        virtual int execute() const = 0;
         virtual std::string to_string() const = 0;
     };
 
@@ -53,6 +54,7 @@ namespace microshellxx
         void add_word(const std::string& word);
         void add_redir(const redir& r);
 
+        int execute() const;
         std::string to_string() const;
     };
 
@@ -68,6 +70,7 @@ namespace microshellxx
         void add_redir(const redir& r);
         const uy::shared_ptr<command>& get_container() const;
 
+        int execute() const;
         std::string to_string() const;
     };
 
@@ -85,6 +88,7 @@ namespace microshellxx
         const uy::shared_ptr<command>& get_first() const;
         const uy::shared_ptr<command>& get_second() const;
 
+        int execute() const;
         std::string to_string() const;
     };
 }

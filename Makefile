@@ -10,7 +10,7 @@ LDFLAGS = -lreadline
 
 CXXFLAGS += -Wall -Wextra -Werror -std=c++98 -pedantic
 
-SOURCES = shell.cpp command.cpp token.cpp parse.cpp
+SOURCES = $(wildcard *.cpp)
 OBJECTS = $(addprefix $(OBJECTS_DIR), $(SOURCES:.cpp=.o))
 
 CXXFLAGS += -fsanitize=address -g3

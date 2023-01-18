@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <wait.h>
 
+#include <algorithm>
+#include <cstdlib>
 #include <sstream>
 
 #include <iostream>

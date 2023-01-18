@@ -5,8 +5,9 @@
 
 #include "command.hpp"
 #include "parse.hpp"
-#include "simple_shared_ptr.hpp"
 #include "token.hpp"
+
+#include <uy_shared_ptr.hpp>
 
 #include <readline/readline.h>
 

@@ -6,8 +6,8 @@
 #include "parse.hpp"
 
 #include "command.hpp"
-#include "simple_shared_ptr.hpp"
 #include "token.hpp"
+#include <uy_shared_ptr.hpp>
 
 #include <exception>
 #include <string>

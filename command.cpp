@@ -5,6 +5,7 @@
 
 #include "command.hpp"
 
+#include <sys/wait.h>
 #include <unistd.h>
 #include <wait.h>
 
@@ -16,7 +17,7 @@
 extern char** environ; // temporary
 #include <sys/stat.h>
 
-namespace microshellxx
+namespace magicconch
 {
     bool simple_command::is_empty() const
     {

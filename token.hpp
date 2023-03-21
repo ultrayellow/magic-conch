@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-namespace microshellxx
+namespace magicconch
 {
     class token
     {

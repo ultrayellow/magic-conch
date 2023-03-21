@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace microshellxx
+namespace magicconch
 {
     static bool _string_contains(const std::string& str, std::string::value_type val)
     {

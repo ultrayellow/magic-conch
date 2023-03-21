@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace microshellxx
+namespace magicconch
 {
     parser::parser(const std::vector<token>& toks)
         : it(toks.begin()), end(toks.end()) {}

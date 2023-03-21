@@ -3,7 +3,7 @@
 ##       ALL WRONGS RESERVED       ##
 ## ******************************* ##
 
-TARGET = microshellxx.out
+TARGET = magic_conch.out
 OBJECTS_DIR = objs/
 CXXFLAGS += -Ishared_ptr
 LDFLAGS = -lreadline
@@ -19,7 +19,7 @@ $(TARGET): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 
 $(OBJECTS_DIR):
-	mkdir $(OBJECTS_DIR)
+	mkdir -p $(OBJECTS_DIR)
 
 $(OBJECTS_DIR)%.o: %.cpp | $(OBJECTS_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -MMD -MF $(@:.o=.d) -MT $@ -MP

@@ -26,8 +26,8 @@ int main()
         {
             try
             {
-                std::vector<microshellxx::token> toks = microshellxx::lex(str);
-                uy::shared_ptr<microshellxx::command> cmd = microshellxx::parser(toks).do_parse();
+                std::vector<magicconch::token> toks = magicconch::lex(str);
+                uy::shared_ptr<magicconch::command> cmd = magicconch::parser(toks).do_parse();
                 std::cout << "Result: " << cmd->to_string() << std::endl;
                 status = cmd->execute(NO_PIPE, NO_PIPE);
             }

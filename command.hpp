@@ -12,7 +12,7 @@
 
 #define NO_PIPE (-1)
 
-namespace microshellxx
+namespace magicconch
 {
     enum redir_type
     {

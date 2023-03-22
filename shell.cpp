@@ -7,12 +7,11 @@
 #include "parse.hpp"
 #include "token.hpp"
 
-#include <uy_shared_ptr.hpp>
-
 #include <readline/readline.h>
 
 #include <cstdlib>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -27,7 +26,7 @@ int main()
             try
             {
                 std::vector<magicconch::token> toks = magicconch::lex(str);
-                uy::shared_ptr<magicconch::command> cmd = magicconch::parser(toks).do_parse();
+                std::shared_ptr<magicconch::command> cmd = magicconch::parser(toks).do_parse();
                 std::cout << "Result: " << cmd->to_string() << std::endl;
                 status = cmd->execute(NO_PIPE, NO_PIPE);
             }

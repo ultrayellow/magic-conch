@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <uy_shared_ptr.hpp>
-
+#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #define NO_PIPE (-1)
@@ -28,7 +28,7 @@ namespace magicconch
         redir_type type;
         std::string word;
 
-        redir(redir_type type, const std::string& word) : type(type), word(word) {}
+        inline redir(redir_type type, std::string&& word) : type(type), word(word) {}
     };
 
     class command
@@ -38,11 +38,11 @@ namespace magicconch
         int next_pipe;
 
     public:
-        command() : pid(0), next_pipe(NO_PIPE) {}
-        virtual ~command() {}
+        inline command() : pid(), next_pipe(NO_PIPE) {}
+        inline virtual ~command() {}
 
-        pid_t get_pid() const { return this->pid; }
-        void set_next_pipe(int next_pipe) { this->next_pipe = next_pipe; }
+        inline pid_t get_pid() const { return this->pid; }
+        inline void set_next_pipe(int next_pipe) { this->next_pipe = next_pipe; }
 
         virtual int execute(int pipe_in, int pipe_out) = 0;
         virtual std::string to_string() const = 0;
@@ -55,14 +55,14 @@ namespace magicconch
         std::vector<redir> redirs;
 
     public:
-        simple_command() : words(), redirs() {}
+        inline simple_command() : words(), redirs() {}
 
-        bool is_empty() const;
-        const std::vector<std::string>& get_words() const;
-        const std::vector<redir>& get_redirs() const;
+        inline bool is_empty() const { return this->words.empty() && this->redirs.empty(); }
+        inline const std::vector<std::string>& get_words() const { return this->words; }
+        inline const std::vector<redir>& get_redirs() const { return this->redirs; }
 
-        void add_word(const std::string& word);
-        void add_redir(const redir& r);
+        inline void add_word(std::string&& word) { this->words.emplace_back(std::move(word)); }
+        inline void add_redir(redir_type type, std::string&& word) { this->redirs.emplace_back(type, std::move(word)); }
 
         int execute(int pipe_in, int pipe_out);
         std::string to_string() const;
@@ -71,14 +71,14 @@ namespace magicconch
     class subshell_command : public command
     {
     private:
-        uy::shared_ptr<command> container;
+        std::shared_ptr<command> container;
         std::vector<redir> redirs;
 
     public:
-        subshell_command(const uy::shared_ptr<command>& container) : container(container) {}
+        inline subshell_command(const std::shared_ptr<command>& container) : container(container) {}
 
-        void add_redir(const redir& r);
-        const uy::shared_ptr<command>& get_container() const;
+        inline void add_redir(redir_type type, std::string&& word) { this->redirs.emplace_back(type, std::move(word)); }
+        inline const std::shared_ptr<command>& get_container() const { return this->container; }
 
         int execute(int pipe_in, int pipe_out);
         std::string to_string() const;
@@ -88,15 +88,15 @@ namespace magicconch
     {
     private:
         std::string connector;
-        uy::shared_ptr<command> first;
-        uy::shared_ptr<command> second;
+        std::shared_ptr<command> first;
+        std::shared_ptr<command> second;
 
     public:
-        command_connection(const std::string& connector, uy::shared_ptr<command> first, uy::shared_ptr<command> second) : connector(connector), first(first), second(second) {}
+        inline command_connection(std::string&& connector, std::shared_ptr<command> first, std::shared_ptr<command> second) : connector(connector), first(first), second(second) {}
 
-        const std::string& get_connector() const;
-        const uy::shared_ptr<command>& get_first() const;
-        const uy::shared_ptr<command>& get_second() const;
+        inline const std::string& get_connector() const { return this->connector; }
+        inline const std::shared_ptr<command>& get_first() const { return this->first; }
+        inline const std::shared_ptr<command>& get_second() const { return this->second; }
 
         int execute(int pipe_in, int pipe_out);
         std::string to_string() const;

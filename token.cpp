@@ -6,6 +6,7 @@
 #include "token.hpp"
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace magicconch
@@ -15,51 +16,36 @@ namespace magicconch
         return str.find(val) != std::string::npos;
     }
 
-    static bool _accept_meta(std::string::const_iterator it, std::string::const_iterator end, std::string::size_type& out_len)
+    static std::string::size_type _accept_meta(std::string::const_iterator it, std::string::const_iterator end)
     {
-        if (_string_contains(" \f\n\r\t\v", *it))
+        if (it == end || _string_contains(" \f\n\r\t\v", *it))
         {
-            out_len = 0;
+            return 0;
         }
         else if (_string_contains("()", *it))
         {
-            out_len = 1;
+            return 1;
         }
         else if (_string_contains("&|<>", *it))
         {
             if (it + 1 != end && *(it + 1) == *it)
             {
-                out_len = 2;
+                return 2;
             }
             else
             {
-                out_len = 1;
+                return 1;
             }
         }
-        else
-        {
-            return false;
-        }
-        return true;
-    }
 
-    static std::string _make_meta_string(std::string::const_iterator it, std::string::size_type len)
-    {
-        std::string ret_val(it, it + len);
-
-        if (ret_val == "&")
-        {
-            throw invalid_token();
-        }
-
-        return ret_val;
+        return std::string::npos;
     }
 
     static std::string::const_iterator _skip_quote(std::string::const_iterator it, std::string::const_iterator end)
     {
         if (*it == '\'' || *it == '\"')
         {
-            char c = *it++;
+            std::string::value_type c = *it++;
 
             while (it != end && *it != c)
             {
@@ -77,35 +63,50 @@ namespace magicconch
 
     std::vector<token> lex(const std::string& str)
     {
-        std::vector<token> ret_val;
+        std::vector<token> tokens;
 
-        std::string::const_iterator it = str.begin(), beg = str.end();
-        do
+        const auto end = str.end();
+        for (auto it = str.begin(), word_begin = end; it != end || word_begin != end; ++it)
         {
-            std::string::size_type n = 0;
-            if (it == str.end() || _accept_meta(it, str.end(), n))
+            const std::string::size_type n = _accept_meta(it, end);
+            if (n == std::string::npos)
             {
-                if (beg != str.end())
+                if (word_begin == end)
                 {
-                    ret_val.push_back(token(false, std::string(beg, it)));
-                    beg = str.end();
+                    // set begin position
+                    word_begin = it;
                 }
-                if (n != 0)
-                {
-                    ret_val.push_back(token(true, _make_meta_string(it, n)));
-                    it += n - 1;
-                }
+                it = _skip_quote(it, end);
             }
             else
             {
-                if (beg == str.end())
+                if (word_begin != end)
                 {
-                    beg = it;
+                    // commit word
+                    tokens.emplace_back(false, std::string(word_begin, it));
+                    // reset begin position
+                    word_begin = end;
+                    if (it == end)
+                    {
+                        break;
+                    }
                 }
-                it = _skip_quote(it, str.end());
-            }
-        } while (it++ != str.end());
 
-        return ret_val;
+                if (n != 0)
+                {
+                    std::string meta(it, it + n);
+
+                    if (meta == "&")
+                    {
+                        throw invalid_token();
+                    }
+
+                    tokens.emplace_back(true, std::move(meta));
+                    it += n - 1; // consider `++it`
+                }
+            }
+        }
+
+        return tokens;
     }
 }

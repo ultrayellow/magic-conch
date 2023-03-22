@@ -7,15 +7,15 @@
 
 #include "command.hpp"
 #include "token.hpp"
-#include <uy_shared_ptr.hpp>
 
 #include <exception>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace magicconch
 {
-    parser::parser(const std::vector<token>& toks)
+    parser::parser(std::vector<token>& toks)
         : it(toks.begin()), end(toks.end()) {}
 
     static void _assert_syntax(bool b)
@@ -76,17 +76,17 @@ namespace magicconch
         return false;
     }
 
-    uy::shared_ptr<command> parser::next_list()
+    std::shared_ptr<command> parser::next_list()
     {
-        uy::shared_ptr<command> tree = next_pipeline();
+        std::shared_ptr<command> tree = this->next_pipeline();
 
         while (this->it != this->end && (this->it->is_meta("&&") || this->it->is_meta("||")))
         {
-            const token& tok = *this->it;
+            token& tok = *this->it;
             this->next();
-            uy::shared_ptr<command> first = tree;
-            uy::shared_ptr<command> second = next_pipeline();
-            tree = uy::make_shared<command_connection>(tok.get(), first, second);
+            std::shared_ptr<command> first = tree;
+            std::shared_ptr<command> second = this->next_pipeline();
+            tree = std::make_shared<command_connection>(tok.detach_word(), first, second);
         }
 
         _assert_syntax(this->it == this->end || this->it->is_meta(")"));
@@ -94,25 +94,25 @@ namespace magicconch
         return tree;
     }
 
-    uy::shared_ptr<command> parser::next_pipeline()
+    std::shared_ptr<command> parser::next_pipeline()
     {
-        uy::shared_ptr<command> tree = next_command();
+        std::shared_ptr<command> tree = this->next_command();
 
         while (this->next_if_meta("|"))
         {
-            uy::shared_ptr<command> first = tree;
-            uy::shared_ptr<command> second = next_command();
-            tree = uy::make_shared<command_connection>("|", first, second);
+            std::shared_ptr<command> first = tree;
+            std::shared_ptr<command> second = this->next_command();
+            tree = std::make_shared<command_connection>("|", first, second);
         }
 
         return tree;
     }
 
-    uy::shared_ptr<command> parser::next_command()
+    std::shared_ptr<command> parser::next_command()
     {
         if (this->next_if_meta("("))
         {
-            uy::shared_ptr<subshell_command> subshell = uy::make_shared<subshell_command>(this->next_list());
+            auto subshell = std::make_shared<subshell_command>(this->next_list());
             _assert_syntax(this->next_if_meta(")"));
 
             // optional redirection list
@@ -125,9 +125,9 @@ namespace magicconch
                     this->next();
                     if (this->it != this->end)
                     {
-                        const token& word = *this->it;
+                        token& word = *this->it;
                         _assert_syntax(this->next_if_word());
-                        subshell->add_redir(redir(type, word.get()));
+                        subshell->add_redir(type, word.detach_word());
                         continue;
                     }
                 }
@@ -144,16 +144,16 @@ namespace magicconch
         }
     }
 
-    uy::shared_ptr<simple_command> parser::next_simple_command()
+    std::shared_ptr<simple_command> parser::next_simple_command()
     {
-        uy::shared_ptr<simple_command> cmd = uy::make_shared<simple_command>();
+        auto cmd = std::make_shared<simple_command>();
 
         while (this->it != this->end)
         {
-            const token& tok = *this->it;
+            token& tok = *this->it;
             if (this->next_if_word())
             {
-                cmd->add_word(tok.get());
+                cmd->add_word(tok.detach_word());
             }
             else
             {
@@ -163,9 +163,9 @@ namespace magicconch
                     this->next();
                     if (this->it != this->end)
                     {
-                        const token& word = *this->it;
+                        token& word = *this->it;
                         _assert_syntax(this->next_if_word());
-                        cmd->add_redir(redir(type, word.get()));
+                        cmd->add_redir(type, word.detach_word());
                         continue;
                     }
                 }
@@ -181,7 +181,7 @@ namespace magicconch
         return cmd;
     }
 
-    uy::shared_ptr<command> parser::do_parse()
+    std::shared_ptr<command> parser::do_parse()
     {
         return this->next_list();
     }

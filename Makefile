@@ -8,7 +8,7 @@ OBJECTS_DIR = objs/
 CXXFLAGS += -Ishared_ptr
 LDFLAGS = -lreadline
 
-CXXFLAGS += -Wall -Wextra -Werror -std=c++98 -pedantic
+CXXFLAGS += -Wall -Wextra -Werror -std=c++11 -pedantic
 
 SOURCES = $(wildcard *.cpp)
 OBJECTS = $(addprefix $(OBJECTS_DIR), $(SOURCES:.cpp=.o))

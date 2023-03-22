@@ -1,3 +1,0 @@
-[submodule "shared_ptr"]
-	path = shared_ptr
-	url = https://github.com/ultrayellow/shared_ptr.git

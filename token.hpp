@@ -7,6 +7,7 @@
 
 #include <exception>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace magicconch
@@ -18,12 +19,12 @@ namespace magicconch
         std::string str;
 
     public:
-        token(bool meta, const std::string& str) : meta(meta), str(str) {}
+        inline token(bool meta, std::string&& str) : meta(meta), str(str) {}
 
-        bool is_word() const { return !this->meta; }
-        bool is_meta(const std::string& str) const { return this->meta && this->str == str; }
+        inline bool is_word() const { return !this->meta; }
+        inline bool is_meta(const std::string& str) const { return this->meta && this->str == str; }
 
-        const std::string& get() const { return this->str; }
+        inline std::string&& detach_word() { return std::move(this->str); }
     };
 
     std::vector<token> lex(const std::string& str);
@@ -31,16 +32,16 @@ namespace magicconch
     class bad_quote_pair : public std::exception
     {
     public:
-        bad_quote_pair() throw() {}
-        virtual ~bad_quote_pair() throw() {}
-        virtual const char* what() const throw() { return "bad quote pair"; }
+        bad_quote_pair() noexcept {}
+        virtual ~bad_quote_pair() noexcept {}
+        virtual const char* what() const noexcept { return "bad quote pair"; }
     };
 
     class invalid_token : public std::exception
     {
     public:
-        invalid_token() throw() {}
-        virtual ~invalid_token() throw() {}
-        virtual const char* what() const throw() { return "invalid token"; }
+        invalid_token() noexcept {}
+        virtual ~invalid_token() noexcept {}
+        virtual const char* what() const noexcept { return "invalid token"; }
     };
 }
